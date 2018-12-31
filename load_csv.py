@@ -2,7 +2,7 @@ import psycopg2
 import os
 import zipfile
 
-rebuildTable = False
+rebuildTable = True
 try:
   conn = psycopg2.connect("host=192.168.1.2 dbname=Citibike user=Citibike password=citibike")
   print ("connected to db")
@@ -35,9 +35,13 @@ if rebuildTable:
   conn.commit()
 
 runs = 0
-for filename in os.listdir('../'):
+totalRuns = 3
+pathToZips = '../'
+
+for filename in os.listdir(pathToZips):
+    print("Loading file " + runs + " of " + totalRuns)
     if filename.endswith(".zip"):
-      with zipfile.ZipFile('../' + filename) as zf:
+      with zipfile.ZipFile(pathToZips + filename) as zf:
         for f in zipfile.ZipFile.namelist(zf):
           if os.path.splitext(f)[1] == '.csv':
               csv = zf.open(f)
@@ -56,15 +60,7 @@ for filename in os.listdir('../'):
               usertype, 
               birth_year, 
               gender ) from stdin CSV HEADER Null 'NULL' """, csv)
-
-      if runs > 2:
+              conn.commit()
+      if runs > totalRuns:
         print('file limit breaker hit')
         break
-# with open("test.csv",'r') as f: # Read csv from zip
-#   #skip next line
-#     with open("updated_test.csv",'w') as f1: 
-#         f.next() # skip header line
-#         for line in f:
-#             f1.write(line)
-#   with open('../201809-citibike-tripdata.csv', 'r') as f:
-#     cur.copy_from(f, 'trips', sep=",", null="NULL",  columns=('tripduration', 'starttime', 'stoptime', 'start_station_id', 'start_station_name', 'start_station_latitude', 'start_station_longitude', 'end_station_id', 'end_station_name', 'end_station_latitude', 'end_station_longitude', 'bikeid', 'usertype', 'birth_year', 'gender'))
